@@ -5,25 +5,20 @@ module delay (
     input  clk,
     output a_delay
 );
-
 reg [2:0] a_reg;
-
 always @(posedge clk)
 begin
     a_reg[0] <= a;
     a_reg[1] <= a_reg[0];
     a_reg[2] <= a_reg[1];
 end
-
 assign a_delay = a_reg[2];
-
 endmodule
 
 
-`timescale 1ns/1ps
+
 
 module delay_tb;
-
 reg clk;
 reg a;
 wire a_delay;
@@ -35,25 +30,18 @@ delay U0 (
 );
 
 always #10 clk = ~clk;
-
 initial begin
     clk = 0;
-    a = 0;
-
-    
+    a = 0;  
     @(posedge clk);
     a = 1;
 
     @(posedge clk);
     a = 0;
-
     repeat(10) @(posedge clk);
-
     $finish;
 end
-
 endmodule
-
 
 
 
@@ -67,21 +55,17 @@ module delay #(parameter M=100)(
     input  clk,
     output a_delay
 );
-
 reg [M-1:0] a_reg;
 
 always @(posedge clk)
 begin
     a_reg <= {a,a_reg[M-1:1]};
 end
-
 assign a_delay = a_reg[0];
-
 endmodule
 
 
-module tb;
-
+module delay_tb;
 reg clk;
 reg a;
 wire a_delay;
@@ -92,22 +76,16 @@ delay #(.M(100)) U0 (
     .a_delay(a_delay)
 );
 
-// Clock generation
-always #10 clk = ~clk;
-    
 
-// Stimulus
+always #10 clk = ~clk;
 initial begin
     clk=0;
     a = 0;
 
     #20 a = 1;
     #20  a=0;
-    #2500 $finish;
-    
-    
+    #2500 $finish;  
 end
-
 endmodule
 
 
@@ -123,23 +101,19 @@ module neg_edge_detector(
     input a,
     output pulse
 );
-
 reg a_delay;
 
 always @(posedge clk)
 begin
     a_delay <= a;
 end
-
 assign pulse = a_delay & ~a;
-
 endmodule
 
 
-`timescale 1ns/1ps
+
 
 module neg_edge_detector_tb;
-
 reg clk;
 reg a;
 wire pulse;
@@ -165,7 +139,6 @@ begin
 
     #40 $finish;
 end
-
 endmodule
 
 
@@ -174,11 +147,9 @@ endmodule
 
 Verilog module that synchronizes an asynchronous input signal a to the clock domain clkb using a two-stage synchronizer.
 
+    
 module cdc_pulse(input a,clka,clkb, output signal_a,signal_b);
-
 reg [1:0]a_reg=0;
-
-
 always @(posedge clkb) begin
  a_reg[0]<=a;
 a_reg[1]<=a_reg[0];
@@ -213,9 +184,3 @@ a=0;
 end
 endmodule
 
-
-
-
-
-
-2)
