@@ -1,0 +1,88 @@
+
+module watchdog_core_v2 #(
+    parameter COUNTER_WIDTH      = 24,
+    parameter RESET_PULSE_COUNT  = 16'd100
+)(  input wire [31:0] min_service_count  ,
+    input wire [31:0] max_service_count  ,
+    input  wire                     clk,
+    input  wire                     rst,
+    input  wire                     wdt_enable,
+    input  wire                     hb_in,
+    input  wire                     clear_fault,
+
+    output wire                     hb_pulse_dbg,
+    output wire [COUNTER_WIDTH-1:0] count_dbg,
+    output wire                     service_ok_dbg,
+    output wire                     early_fault_dbg,
+    output wire                     late_fault_dbg,
+    output wire                     fault_flag,
+    output wire [1:0]               fault_code,
+    output wire                     sys_reset_pulse,
+    output wire                     reset_busy
+);
+
+    wire hb_pulse;
+    wire service_ok_pulse;
+    wire early_fault_pulse;
+    wire late_fault_pulse;
+    wire clear_counter;
+
+    heartbeat_sync u_heartbeat_sync (
+        .clk      (clk),
+        .rst      (rst),
+        .hb_in    (hb_in),
+        .hb_pulse (hb_pulse)
+    );
+
+    wdt_window_counter #(
+        .COUNTER_WIDTH (COUNTER_WIDTH)
+    ) u_wdt_window_counter (
+        .clk        (clk),
+        .rst        (rst),
+        .enable     (wdt_enable),
+        .clear_count(clear_counter),
+        .count_value(count_dbg)
+    );
+
+    wdt_service_checker #(
+        .COUNTER_WIDTH     (COUNTER_WIDTH))
+         u_wdt_service_checker (
+        .min_service_count (min_service_count),
+        .max_service_count (max_service_count),
+        .clk              (clk),
+        .rst              (rst),
+        .enable           (wdt_enable),
+        .hb_pulse         (hb_pulse),
+        .count_value      (count_dbg),
+        .service_ok_pulse (service_ok_pulse),
+        .early_fault_pulse(early_fault_pulse),
+        .late_fault_pulse (late_fault_pulse)
+    );
+
+    wdt_fault_register u_wdt_fault_register (
+        .clk              (clk),
+        .rst              (rst),
+        .clear_fault      (clear_fault),
+        .early_fault_pulse(early_fault_pulse),
+        .late_fault_pulse (late_fault_pulse),
+        .fault_flag       (fault_flag),
+        .fault_code       (fault_code)
+    );
+
+    wdt_reset_pulser #(
+        .PULSE_COUNT (RESET_PULSE_COUNT)
+    ) u_wdt_reset_pulser (
+        .clk        (clk),
+        .rst        (rst),
+        .trigger    (fault_flag),
+        .reset_pulse(sys_reset_pulse),
+        .busy       (reset_busy)
+    );
+
+    assign clear_counter   = service_ok_pulse;
+    assign hb_pulse_dbg    = hb_pulse;
+    assign service_ok_dbg  = service_ok_pulse;
+    assign early_fault_dbg = early_fault_pulse;
+    assign late_fault_dbg  = late_fault_pulse;
+
+endmodule
