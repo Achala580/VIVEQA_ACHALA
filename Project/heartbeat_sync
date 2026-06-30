@@ -1,0 +1,23 @@
+
+module heartbeat_sync (
+    input  wire clk,
+    input  wire rst,
+    input  wire hb_in,
+    output wire hb_pulse
+);
+
+    reg hb_ff1, hb_ff2;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            hb_ff1 <= 1'b0;
+            hb_ff2 <= 1'b0;
+        end else begin
+            hb_ff1 <= hb_in;
+            hb_ff2 <= hb_ff1;
+        end
+    end
+
+    assign hb_pulse = hb_ff1 & ~hb_ff2;
+
+endmodule
